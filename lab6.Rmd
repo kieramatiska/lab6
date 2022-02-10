@@ -1,0 +1,77 @@
+---
+title: "ESM 244 Lab Week 6"
+author: "Kiera Matiska"
+date: "2/10/2022"
+output: html_document
+---
+
+```{r setup, include = TRUE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(palmerpenguins)
+
+library(NbClust)
+library(cluster)
+library(factoextra)
+library(dendextend)
+library(ggdendro)
+```
+
+## Part 1: k-means clustering
+
+```{r}
+# bill length vs bill depth
+ggplot(penguins) +
+  geom_point(aes(x = bill_length_mm, 
+                 y = bill_depth_mm,
+                 color = species, 
+                 shape = sex),
+             size = 3, 
+             alpha = 0.7) +
+  scale_color_manual(values = c("orange", 
+                                "cyan4", 
+                                "darkmagenta"))
+```
+
+```{r}
+ggplot(penguins) +
+  geom_point(aes(x = flipper_length_mm,
+                 y = body_mass_g,
+                 color = species,
+                 shape = sex),
+             size = 3,
+             alpha = 0.7) +
+  scale_color_manual(values = c("orange",
+                                "cyan4",
+                                "darkmagenta"))
+```
+
+```{r}
+summary(penguins)
+# looking forthe 4 variables, how do the numbers of the variables relate to each other
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
