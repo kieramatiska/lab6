@@ -49,19 +49,145 @@ ggplot(penguins) +
 
 ```{r}
 summary(penguins)
-# looking forthe 4 variables, how do the numbers of the variables relate to each other
+# looking for the 4 variables, how do the numbers of the variables relate to each other
 ```
 
+```{r}
+penguins_complete <- penguins %>% 
+  drop_na(bill_length_mm, bill_depth_mm, body_mass_g, flipper_length_mm)
 
+penguins_scale <- penguins_complete %>% 
+  select(ends_with(c("_mm", "_g"))) %>% 
+  scale()
 
+summary(penguins_scale) # means are now 0 and are somewhat in relation with one another
+```
 
+### How many clusters?
 
+```{r}
+number_est <- NbClust(penguins_scale, min.nc =  2, max.nc = 10,
+                      method = "kmeans") # tells us in words how many clusters to use
 
+# knee method
+fviz_nbclust(penguins_scale, FUNcluster = kmeans, method = "wss", k.max = 10) # choose 3 based on graph because it had the most drop beforehand
+```
 
+### Let's run some k-means
 
+```{r}
+penguins_km <- kmeans(penguins_scale, centers = 3, nstart = 25)
+penguins_km$size # shows how many observations fall into each cluster
+penguins_km$cluster # vector that shous what cluster each of the rows fall into
+penguins_km$centers # shows us where the centers would be
 
+penguins_cl <- data.frame(penguins_complete,
+                          cluster_num = factor(penguins_km$cluster)) # shows which observations would fall in which cluster
 
+ggplot(penguins_cl) +
+  geom_point(aes(x = flipper_length_mm, 
+                 y = body_mass_g,
+                 color = cluster_num, 
+                 shape = species))
 
+ggplot(penguins_cl) +
+  geom_point(aes(x = bill_depth_mm, 
+                 y = bill_length_mm,
+                 color = cluster_num, 
+                 shape = species))
+
+penguins_cl %>% 
+  select(species, cluster_num) %>%
+  table()
+```
+
+## Part 2: Hierarchical cluster analysis (agglomerative)
+
+```{r}
+# create a distance matrix
+peng_dist <- dist(penguins_scale, method = "euclidean")
+
+# hierarchical clustering (complete linkage)
+peng_hc_complete <- hclust(peng_dist, method = "ward.D")
+
+# plot using base plot
+plot(peng_hc_complete, cex = 0.6, hang = -1)
+```
+
+```{r}
+# cut into three clusters
+peng_cut_hc <- cutree(peng_hc_complete, 3)
+
+table(peng_cut_hc, penguins_complete$species)
+# this is unsupervised machine learning
+# the palmetto binary regression model was supervised machine learning
+```
+
+### World Bank Data - read in and simple
+
+```{r}
+wb_env <- read_csv("wb_env.csv")
+```
+
+```{r}
+wb_ghg_20 <- wb_env %>% 
+  arrange(-ghg) %>% 
+  head(20) # chooses the first 20 observations
+
+summary(wb_ghg_20)
+```
+
+### scale the data
+
+```{r}
+wb_scaled <- wb_ghg_20 %>% 
+  select(3:7) %>% 
+  scale()
+
+summary(wb_scaled)
+
+rownames(wb_scaled) <- wb_ghg_20$name
+```
+
+### Calculate distance matrix
+
+```{r}
+euc_distance <- dist(wb_scaled, method = "euclidean", diag = TRUE, upper = TRUE)
+```
+
+### do our clustering!
+
+```{r}
+hc_complete <- hclust(euc_distance, method = "complete")
+
+plot(hc_complete, cex = 0.6, hang = -1)
+```
+
+```{r}
+hc_single <- hclust(euc_distance, method = "single")
+
+plot(hc_single, cex = 0.6, hang = -1)
+```
+
+### make a tanglegram!
+
+```{r}
+# convert to class dendrogram
+dend_complete <- as.dendrogram(hc_complete)
+dend_single <- as.dendrogram(hc_single)
+
+tanglegram(dend_complete, dend_single)
+# colored lines show that the countries are in the same branch as each other; common among both clustering types
+```
+
+### Make a ggplot dendrogram!
+
+```{r}
+ggdendrogram(hc_complete, rotate = TRUE) +
+  theme_minimal() +
+  labs(x = "Country",
+       y = "Distance")
+```
 
 
 
